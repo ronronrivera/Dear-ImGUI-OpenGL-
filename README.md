@@ -1,101 +1,118 @@
-# Road to Physics: Learning OpenGL & Dear ImGui 🚀
+# Physix 🧪
 
-Welcome to my learning repository! This project serves as the foundational sandbox where I am learning **OpenGL** and **Dear ImGui** in C++ from scratch. 
-
-The ultimate goal of this journey is to acquire the necessary graphics, windowing, and GUI tooling skills to build and visualize a custom **Physics Engine** with real-time interactive parameter control.
+A 2.5D physics sandbox built from scratch in C++ and OpenGL. 2D rigid body simulation — collision detection, impulse resolution, and fluid sim — viewed through a 3D perspective camera with a Blender-inspired Dear ImGui editor. Built as a hands-on way to learn physics by breaking it in real time.
 
 ---
 
-## 🎯 The Vision
-Before jumping straight into collision algorithms, rigid body dynamics, and constraints, a robust visualization and debugging interface is essential. 
+## 🗺️ Track Record
 
-Using **OpenGL** gives direct access to hardware-accelerated rendering, while **Dear ImGui** provides a powerful, bloat-free immediate mode graphical user interface. Together, they will allow me to:
-- Render physical elements (particles, bounds, rigid bodies, contact points, and vectors).
-- Adjust physics variables dynamically in real-time (gravity, friction, coefficient of restitution, time-step).
-- Inspect entity details, frame rates, solver iterations, and engine performance metrics.
-- Pause, step-frame, and reset the simulation workspace.
+### **Phase 1: Window & Context**
+- [x] GLFW window + OpenGL 3.3 core context
+- [x] GLAD function pointer loading
+- [x] Basic game loop and screen clearing
 
----
-
-## 🗺️ Roadmap & Milestones
-
-### **Phase 1: Windowing & Render Loop (Current)**
-- [x] Initialize GLFW and load OpenGL function pointers with GLAD.
-- [x] Create a viewport-resizable window context.
-- [x] Basic game loop and screen clearing.
-
-### **Phase 2: Dear ImGui Integration**
-- [x] Initialize ImGui contexts for GLFW and OpenGL 3.
-- [x] Set up the ImGui render frame within the main loop.
-- [x] Create a basic control panel window to change the viewport background color.
+### **Phase 2: Dear ImGui Shell**
+- [x] ImGui GLFW + OpenGL3 backends
+- [x] Blender-inspired layout — left panel, viewport, right panel, bottom bar
+- [x] Framebuffer Object — physics scene renders into ImGui viewport as a texture
 
 ### **Phase 3: 2D Render Abstraction**
-- [ ] Write vertex and fragment shaders.
-- [ ] Set up VAO, VBO, and EBO abstractions for shapes (circles, boxes, lines).
-- [ ] Add projection matrix support to map world space coordinates to pixel space coordinates.
+- [ ] Vertex + fragment shaders (flat, debug, terrain, fluid)
+- [ ] VAO/VBO abstractions for circles, boxes, lines
+- [ ] Instanced rendering for large body counts
+- [ ] Projection + view matrix pipeline via GLM
 
-### **Phase 4: Physics Engine Foundations**
-- [ ] Design structural math types (`Vector2D`, `Matrix2x2`, `Matrix3x3`, etc.).
-- [ ] Implement an explicit Euler or Verlet integration loop.
-- [ ] Simulate particle physics (gravity, drag, wind, and basic boundaries).
+### **Phase 4: Camera**
+- [ ] 3D perspective camera on the XY physics plane
+- [ ] Orbit, pan, zoom controls
+- [ ] Mouse picking — ray cast from screen to world space
 
-### **Phase 5: Rigid Body & Collision Solver**
-- [ ] Define rigid body shapes (circles, convex polygons).
-- [ ] Add collision detection (Broad phase spatial hashing + Narrow phase SAT/GJK).
-- [ ] Implement impulse resolution for elastic and inelastic collisions.
-- [ ] Add visual contact point debugging.
+### **Phase 5: Math & Physics Foundation**
+- [ ] `Vec2` — position, velocity, force math for the physics layer
+- [ ] `Clock` — fixed timestep with accumulator
+- [ ] `RigidBody` — pos, vel, mass, shape, material, sleep state
+- [ ] `World` — simulation root, owns all bodies and drives the tick
+
+### **Phase 6: Integrator**
+- [ ] Semi-implicit Euler integration
+- [ ] Gravity, damping, force accumulation
+- [ ] Fixed timestep loop with accumulator
+
+### **Phase 7: Collision Detection**
+- [ ] Broadphase — spatial hash grid, AABB pairs
+- [ ] Narrowphase — SAT for boxes, circle-circle, circle-box
+- [ ] Manifold generation — normal, depth, contact points
+
+### **Phase 8: Impulse Resolution**
+- [ ] Sequential impulse solver
+- [ ] Restitution (elastic + inelastic)
+- [ ] Friction
+- [ ] Contact point debug draw
+
+### **Phase 9: Procedural Generation**
+- [ ] Perlin noise heightmap terrain
+- [ ] Static terrain body generation
+- [ ] Random object spawner with layout patterns
+- [ ] Regenerate on demand from UI
+
+### **Phase 10: Fluid Simulation**
+- [ ] SPH (Smoothed Particle Hydrodynamics) particles
+- [ ] Pressure + viscosity forces
+- [ ] Fluid-rigid body interaction
+- [ ] Fluid debug draw
+
+### **Phase 11: Physics Problem Scenarios**
+- [ ] Projectile motion
+- [ ] Pendulum chain
+- [ ] Fluid pressure
+- [ ] Stack collapse
+- [ ] Inclined plane
+
+### **Phase 12: Debug Draw**
+- [ ] AABB overlay
+- [ ] Contact normals
+- [ ] Velocity vectors
+- [ ] Sleep state indicators
 
 ---
 
 ## 📂 Project Structure
 
 ```text
+Physix/
 ├── src/
-│   └── main.cpp           # Main entry point (GLFW window & OpenGL setup)
+│   ├── core/              # Window, App, World, RigidBody, physics systems
+│   ├── renderer/          # Renderer, Camera3D, Shader, Framebuffer, DebugDraw
+│   ├── ui/                # ImGui panels — Viewport, ScenePanel, Inspector, ProblemBar
+│   ├── procgen/           # TerrainGen, ObjectSpawner, ProblemFactory
+│   ├── support/           # Clock, InputManager
+│   └── main.cpp
+├── include/               # Headers mirroring src/
+├── shaders/               # GLSL source files
 ├── tools/
-│   ├── glad.c             # OpenGL 3.3 loader source
-│   ├── glad/ & KHR/       # OpenGL loader header dependencies
-│   └── imgui/             # Dear ImGui library source & headers (v1.xx)
-│       └── backends/      # ImGui GLFW and OpenGL3 bindings
-├── Makefile               # GNU Make script configuration
-└── README.md              # Project documentation
+│   ├── imgui/             # Dear ImGui + GLFW/OpenGL backends
+│   ├── glad/              # OpenGL loader
+│   └── stb/               # stb_perlin.h
+├── Makefile
+└── README.md
 ```
 
 ---
 
-## 🛠️ Build and Setup
+## 🛠️ Build & Run
 
 ### Prerequisites
-To build and run this project, make sure you have standard development tools and GLFW installed:
 
-On Ubuntu/Debian:
 ```bash
 sudo apt update
 sudo apt install build-essential pkg-config libglfw3-dev libgl1-mesa-dev
 ```
 
-### Building the Project
-The project uses a custom [Makefile](Makefile) to compile the source code along with GLAD and Dear ImGui.
+### Build
 
-1. **Compile the program:**
-   ```bash
-   make
-   ```
-   This compiles all dependencies (including ImGui and GLAD source files) and creates the executable `imgui_tutorial`.
+```bash
+make        # compile
+./physix    # run
+make clean  # clean build files
+```
 
-2. **Run the executable:**
-   ```bash
-   ./imgui_tutorial
-   ```
-
-3. **Clean build files:**
-   ```bash
-   make clean
-   ```
-
----
-
-## 📚 References & Resources
-- [Learn OpenGL](https://learnopengl.com/) - Excellent tutorial for understanding graphics fundamentals.
-- [Dear ImGui Repository](https://github.com/ocornut/imgui) - Library documentation and demo window reference.
-- [Game Physics Cookbook](https://github.com/moth3r/Game-Physics-Cookbook) & [Erin Catto's Physics Lectures](https://box2d.org/publications/) - Inspiration and math behind modern 2D physics engines.

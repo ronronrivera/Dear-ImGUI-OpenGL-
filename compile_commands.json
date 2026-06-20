@@ -15,8 +15,23 @@
       "build/main.o",
       "src/main.cpp"
     ],
-    "directory": "/home/ronaspe42/Tutorial/CPP/ImGui",
+    "directory": "/home/ronaspe42/Projects/CPP_PROJECTS/Physix",
     "output": "build/main.o"
+  },
+  {
+    "file": "tools/glad.c",
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Itools/",
+      "-g",
+      "-Wall",
+      "-c",
+      "-o",
+      "build/glad.o",
+      "tools/glad.c"
+    ],
+    "directory": "/home/ronaspe42/Projects/CPP_PROJECTS/Physix",
+    "output": "build/glad.o"
   },
   {
     "file": "tools/imgui/imgui.cpp",
@@ -34,7 +49,7 @@
       "build/imgui.o",
       "tools/imgui/imgui.cpp"
     ],
-    "directory": "/home/ronaspe42/Tutorial/CPP/ImGui",
+    "directory": "/home/ronaspe42/Projects/CPP_PROJECTS/Physix",
     "output": "build/imgui.o"
   },
   {
@@ -53,7 +68,7 @@
       "build/imgui_demo.o",
       "tools/imgui/imgui_demo.cpp"
     ],
-    "directory": "/home/ronaspe42/Tutorial/CPP/ImGui",
+    "directory": "/home/ronaspe42/Projects/CPP_PROJECTS/Physix",
     "output": "build/imgui_demo.o"
   },
   {
@@ -72,7 +87,7 @@
       "build/imgui_draw.o",
       "tools/imgui/imgui_draw.cpp"
     ],
-    "directory": "/home/ronaspe42/Tutorial/CPP/ImGui",
+    "directory": "/home/ronaspe42/Projects/CPP_PROJECTS/Physix",
     "output": "build/imgui_draw.o"
   },
   {
@@ -91,7 +106,7 @@
       "build/imgui_tables.o",
       "tools/imgui/imgui_tables.cpp"
     ],
-    "directory": "/home/ronaspe42/Tutorial/CPP/ImGui",
+    "directory": "/home/ronaspe42/Projects/CPP_PROJECTS/Physix",
     "output": "build/imgui_tables.o"
   },
   {
@@ -110,7 +125,7 @@
       "build/imgui_widgets.o",
       "tools/imgui/imgui_widgets.cpp"
     ],
-    "directory": "/home/ronaspe42/Tutorial/CPP/ImGui",
+    "directory": "/home/ronaspe42/Projects/CPP_PROJECTS/Physix",
     "output": "build/imgui_widgets.o"
   },
   {
@@ -129,7 +144,7 @@
       "build/imgui_impl_glfw.o",
       "tools/imgui/backends/imgui_impl_glfw.cpp"
     ],
-    "directory": "/home/ronaspe42/Tutorial/CPP/ImGui",
+    "directory": "/home/ronaspe42/Projects/CPP_PROJECTS/Physix",
     "output": "build/imgui_impl_glfw.o"
   },
   {
@@ -148,7 +163,7 @@
       "build/imgui_impl_opengl3.o",
       "tools/imgui/backends/imgui_impl_opengl3.cpp"
     ],
-    "directory": "/home/ronaspe42/Tutorial/CPP/ImGui",
+    "directory": "/home/ronaspe42/Projects/CPP_PROJECTS/Physix",
     "output": "build/imgui_impl_opengl3.o"
   }
 ]

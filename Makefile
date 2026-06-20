@@ -1,7 +1,7 @@
 CXX = g++
 CC = gcc
 
-output = imgui_tutorial
+output = physix
 IMGUI_DIR = tools/imgui
 
 SOURCES = src/main.cpp tools/glad.c
