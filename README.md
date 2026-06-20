@@ -25,9 +25,9 @@ Using **OpenGL** gives direct access to hardware-accelerated rendering, while **
 - [x] Basic game loop and screen clearing.
 
 ### **Phase 2: Dear ImGui Integration**
-- [ ] Initialize ImGui contexts for GLFW and OpenGL 3.
-- [ ] Set up the ImGui render frame within the main loop.
-- [ ] Create a basic control panel window to change the viewport background color.
+- [x] Initialize ImGui contexts for GLFW and OpenGL 3.
+- [x] Set up the ImGui render frame within the main loop.
+- [x] Create a basic control panel window to change the viewport background color.
 
 ### **Phase 3: 2D Render Abstraction**
 - [ ] Write vertex and fragment shaders.
