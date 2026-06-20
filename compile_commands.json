@@ -1,0 +1,154 @@
+[
+  {
+    "file": "src/main.cpp",
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Itools/imgui",
+      "-Itools/imgui/backends",
+      "-Itools/",
+      "-g",
+      "-Wall",
+      "-Wformat",
+      "-c",
+      "-o",
+      "build/main.o",
+      "src/main.cpp"
+    ],
+    "directory": "/home/ronaspe42/Tutorial/CPP/ImGui",
+    "output": "build/main.o"
+  },
+  {
+    "file": "tools/imgui/imgui.cpp",
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Itools/imgui",
+      "-Itools/imgui/backends",
+      "-Itools/",
+      "-g",
+      "-Wall",
+      "-Wformat",
+      "-c",
+      "-o",
+      "build/imgui.o",
+      "tools/imgui/imgui.cpp"
+    ],
+    "directory": "/home/ronaspe42/Tutorial/CPP/ImGui",
+    "output": "build/imgui.o"
+  },
+  {
+    "file": "tools/imgui/imgui_demo.cpp",
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Itools/imgui",
+      "-Itools/imgui/backends",
+      "-Itools/",
+      "-g",
+      "-Wall",
+      "-Wformat",
+      "-c",
+      "-o",
+      "build/imgui_demo.o",
+      "tools/imgui/imgui_demo.cpp"
+    ],
+    "directory": "/home/ronaspe42/Tutorial/CPP/ImGui",
+    "output": "build/imgui_demo.o"
+  },
+  {
+    "file": "tools/imgui/imgui_draw.cpp",
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Itools/imgui",
+      "-Itools/imgui/backends",
+      "-Itools/",
+      "-g",
+      "-Wall",
+      "-Wformat",
+      "-c",
+      "-o",
+      "build/imgui_draw.o",
+      "tools/imgui/imgui_draw.cpp"
+    ],
+    "directory": "/home/ronaspe42/Tutorial/CPP/ImGui",
+    "output": "build/imgui_draw.o"
+  },
+  {
+    "file": "tools/imgui/imgui_tables.cpp",
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Itools/imgui",
+      "-Itools/imgui/backends",
+      "-Itools/",
+      "-g",
+      "-Wall",
+      "-Wformat",
+      "-c",
+      "-o",
+      "build/imgui_tables.o",
+      "tools/imgui/imgui_tables.cpp"
+    ],
+    "directory": "/home/ronaspe42/Tutorial/CPP/ImGui",
+    "output": "build/imgui_tables.o"
+  },
+  {
+    "file": "tools/imgui/imgui_widgets.cpp",
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Itools/imgui",
+      "-Itools/imgui/backends",
+      "-Itools/",
+      "-g",
+      "-Wall",
+      "-Wformat",
+      "-c",
+      "-o",
+      "build/imgui_widgets.o",
+      "tools/imgui/imgui_widgets.cpp"
+    ],
+    "directory": "/home/ronaspe42/Tutorial/CPP/ImGui",
+    "output": "build/imgui_widgets.o"
+  },
+  {
+    "file": "tools/imgui/backends/imgui_impl_glfw.cpp",
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Itools/imgui",
+      "-Itools/imgui/backends",
+      "-Itools/",
+      "-g",
+      "-Wall",
+      "-Wformat",
+      "-c",
+      "-o",
+      "build/imgui_impl_glfw.o",
+      "tools/imgui/backends/imgui_impl_glfw.cpp"
+    ],
+    "directory": "/home/ronaspe42/Tutorial/CPP/ImGui",
+    "output": "build/imgui_impl_glfw.o"
+  },
+  {
+    "file": "tools/imgui/backends/imgui_impl_opengl3.cpp",
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Itools/imgui",
+      "-Itools/imgui/backends",
+      "-Itools/",
+      "-g",
+      "-Wall",
+      "-Wformat",
+      "-c",
+      "-o",
+      "build/imgui_impl_opengl3.o",
+      "tools/imgui/backends/imgui_impl_opengl3.cpp"
+    ],
+    "directory": "/home/ronaspe42/Tutorial/CPP/ImGui",
+    "output": "build/imgui_impl_opengl3.o"
+  }
+]
