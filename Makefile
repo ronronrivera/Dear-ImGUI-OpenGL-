@@ -1,54 +1,61 @@
-CXX = g++
-CC = gcc
-
-output = physix
+CXX      = g++
+CC       = gcc
+OUTPUT   = physix
 IMGUI_DIR = tools/imgui
 
-SOURCES = src/main.cpp tools/glad.c
-SOURCES += $(IMGUI_DIR)/imgui.cpp
-SOURCES += $(IMGUI_DIR)/imgui_demo.cpp
-SOURCES += $(IMGUI_DIR)/imgui_draw.cpp
-SOURCES += $(IMGUI_DIR)/imgui_tables.cpp
-SOURCES += $(IMGUI_DIR)/imgui_widgets.cpp
-SOURCES += $(IMGUI_DIR)/backends/imgui_impl_glfw.cpp
-SOURCES += $(IMGUI_DIR)/backends/imgui_impl_opengl3.cpp
+# ── Sources ───────────────────────────────────────────────────────────────────
+SRC_CPP   = $(shell find src/ -name "*.cpp")
+GLAD_C    = tools/glad.c
+IMGUI_CPP = $(IMGUI_DIR)/imgui.cpp \
+            $(IMGUI_DIR)/imgui_demo.cpp \
+            $(IMGUI_DIR)/imgui_draw.cpp \
+            $(IMGUI_DIR)/imgui_tables.cpp \
+            $(IMGUI_DIR)/imgui_widgets.cpp \
+            $(IMGUI_DIR)/backends/imgui_impl_glfw.cpp \
+            $(IMGUI_DIR)/backends/imgui_impl_opengl3.cpp
 
-BUILD_FILE = build/
+# ── Object files (preserve directory structure) ───────────────────────────────
+SRC_OBJS   = $(patsubst src/%.cpp,           build/src/%.o,           $(SRC_CPP))
+GLAD_OBJS  = $(patsubst tools/%.c,           build/tools/%.o,         $(GLAD_C))
+IMGUI_OBJS = $(patsubst $(IMGUI_DIR)/%.cpp,  build/imgui/%.o,         $(IMGUI_CPP))
 
-OBJS = $(addprefix $(BUILD_FILE), \
-       $(addsuffix .o,$(basename $(notdir $(SOURCES)))))
+OBJS = $(SRC_OBJS) $(GLAD_OBJS) $(IMGUI_OBJS)
 
-LINUX_GL_LIBS = -lGL
+# ── Flags ─────────────────────────────────────────────────────────────────────
+CXXFLAGS = -std=c++17 -g -Wall -Wformat \
+           -I$(IMGUI_DIR) \
+           -I$(IMGUI_DIR)/backends \
+           -Itools/ \
+           -Iinclude/
 
-CXXFLAGS = -std=c++17 -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backends -Itools/
-CXXFLAGS += -g -Wall -Wformat
-CFLAGS = -Itools/ -g -Wall
+CFLAGS   = -g -Wall -Itools/
 
-LIBS = $(LINUX_GL_LIBS) $(shell pkg-config --static --libs glfw3)
+LIBS     = -lGL $(shell pkg-config --static --libs glfw3)
 
+# ── Rules ─────────────────────────────────────────────────────────────────────
 .PHONY: all clean
 
-all : $(output)
-	@echo "build complete"
+all: $(OUTPUT)
+	@echo "build complete → ./$(OUTPUT)"
 
-$(BUILD_FILE):
-	mkdir -p $(BUILD_FILE)
-
-$(BUILD_FILE)%.o : src/%.cpp | $(BUILD_FILE)
+# src/*.cpp → build/src/*.o
+build/src/%.o: src/%.cpp
+	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-$(BUILD_FILE)%.o : tools/%.c | $(BUILD_FILE)
+# tools/glad.c → build/tools/glad.o
+build/tools/%.o: tools/%.c
+	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(BUILD_FILE)%.o : $(IMGUI_DIR)/%.cpp | $(BUILD_FILE)
+# imgui/*.cpp → build/imgui/*.o
+build/imgui/%.o: $(IMGUI_DIR)/%.cpp
+	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-$(BUILD_FILE)%.o : $(IMGUI_DIR)/backends/%.cpp | $(BUILD_FILE)
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
+# link
+$(OUTPUT): $(OBJS)
+	$(CXX) -o $@ $^ $(LIBS)
 
-$(output) : $(OBJS)
-	$(CXX) -o $@ $^ $(CXXFLAGS) $(LIBS)
-
-clean: 
-	rm -rf $(output) $(BUILD_FILE)
-
+clean:
+	rm -rf $(OUTPUT) build/
