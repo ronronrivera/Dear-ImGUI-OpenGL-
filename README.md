@@ -1,6 +1,6 @@
 # Physix 🧪
 
-A 2.5D physics sandbox built from scratch in C++ and OpenGL. 2D rigid body simulation — collision detection, impulse resolution, and fluid sim — viewed through a 3D perspective camera with a Blender-inspired Dear ImGui editor. Built as a hands-on way to learn physics by breaking it in real time.
+A 2.5D physics engine built from scratch in C++ and OpenGL. 2D rigid body simulation — collision detection, impulse resolution, and fluid sim — viewed through a 3D perspective camera with a Blender-inspired Dear ImGui editor. Built as a hands-on way to learn physics by breaking it in real time.
 
 ---
 
