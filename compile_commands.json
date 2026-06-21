@@ -4,166 +4,194 @@
     "arguments": [
       "/usr/bin/g++",
       "-std=c++17",
-      "-Itools/imgui",
-      "-Itools/imgui/backends",
-      "-Itools/",
       "-g",
       "-Wall",
       "-Wformat",
+      "-Itools/imgui",
+      "-Itools/imgui/backends",
+      "-Itools/",
+      "-Iinclude/",
       "-c",
       "-o",
-      "build/main.o",
+      "build/src/main.o",
       "src/main.cpp"
     ],
     "directory": "/home/ronaspe42/Projects/CPP_PROJECTS/Physix",
-    "output": "build/main.o"
+    "output": "build/src/main.o"
+  },
+  {
+    "file": "src/core/window.cpp",
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-g",
+      "-Wall",
+      "-Wformat",
+      "-Itools/imgui",
+      "-Itools/imgui/backends",
+      "-Itools/",
+      "-Iinclude/",
+      "-c",
+      "-o",
+      "build/src/core/window.o",
+      "src/core/window.cpp"
+    ],
+    "directory": "/home/ronaspe42/Projects/CPP_PROJECTS/Physix",
+    "output": "build/src/core/window.o"
   },
   {
     "file": "tools/glad.c",
     "arguments": [
       "/usr/bin/gcc",
-      "-Itools/",
       "-g",
       "-Wall",
+      "-Itools/",
       "-c",
       "-o",
-      "build/glad.o",
+      "build/tools/glad.o",
       "tools/glad.c"
     ],
     "directory": "/home/ronaspe42/Projects/CPP_PROJECTS/Physix",
-    "output": "build/glad.o"
+    "output": "build/tools/glad.o"
   },
   {
     "file": "tools/imgui/imgui.cpp",
     "arguments": [
       "/usr/bin/g++",
       "-std=c++17",
-      "-Itools/imgui",
-      "-Itools/imgui/backends",
-      "-Itools/",
       "-g",
       "-Wall",
       "-Wformat",
+      "-Itools/imgui",
+      "-Itools/imgui/backends",
+      "-Itools/",
+      "-Iinclude/",
       "-c",
       "-o",
-      "build/imgui.o",
+      "build/imgui/imgui.o",
       "tools/imgui/imgui.cpp"
     ],
     "directory": "/home/ronaspe42/Projects/CPP_PROJECTS/Physix",
-    "output": "build/imgui.o"
+    "output": "build/imgui/imgui.o"
   },
   {
     "file": "tools/imgui/imgui_demo.cpp",
     "arguments": [
       "/usr/bin/g++",
       "-std=c++17",
-      "-Itools/imgui",
-      "-Itools/imgui/backends",
-      "-Itools/",
       "-g",
       "-Wall",
       "-Wformat",
+      "-Itools/imgui",
+      "-Itools/imgui/backends",
+      "-Itools/",
+      "-Iinclude/",
       "-c",
       "-o",
-      "build/imgui_demo.o",
+      "build/imgui/imgui_demo.o",
       "tools/imgui/imgui_demo.cpp"
     ],
     "directory": "/home/ronaspe42/Projects/CPP_PROJECTS/Physix",
-    "output": "build/imgui_demo.o"
+    "output": "build/imgui/imgui_demo.o"
   },
   {
     "file": "tools/imgui/imgui_draw.cpp",
     "arguments": [
       "/usr/bin/g++",
       "-std=c++17",
-      "-Itools/imgui",
-      "-Itools/imgui/backends",
-      "-Itools/",
       "-g",
       "-Wall",
       "-Wformat",
+      "-Itools/imgui",
+      "-Itools/imgui/backends",
+      "-Itools/",
+      "-Iinclude/",
       "-c",
       "-o",
-      "build/imgui_draw.o",
+      "build/imgui/imgui_draw.o",
       "tools/imgui/imgui_draw.cpp"
     ],
     "directory": "/home/ronaspe42/Projects/CPP_PROJECTS/Physix",
-    "output": "build/imgui_draw.o"
+    "output": "build/imgui/imgui_draw.o"
   },
   {
     "file": "tools/imgui/imgui_tables.cpp",
     "arguments": [
       "/usr/bin/g++",
       "-std=c++17",
-      "-Itools/imgui",
-      "-Itools/imgui/backends",
-      "-Itools/",
       "-g",
       "-Wall",
       "-Wformat",
+      "-Itools/imgui",
+      "-Itools/imgui/backends",
+      "-Itools/",
+      "-Iinclude/",
       "-c",
       "-o",
-      "build/imgui_tables.o",
+      "build/imgui/imgui_tables.o",
       "tools/imgui/imgui_tables.cpp"
     ],
     "directory": "/home/ronaspe42/Projects/CPP_PROJECTS/Physix",
-    "output": "build/imgui_tables.o"
+    "output": "build/imgui/imgui_tables.o"
   },
   {
     "file": "tools/imgui/imgui_widgets.cpp",
     "arguments": [
       "/usr/bin/g++",
       "-std=c++17",
-      "-Itools/imgui",
-      "-Itools/imgui/backends",
-      "-Itools/",
       "-g",
       "-Wall",
       "-Wformat",
+      "-Itools/imgui",
+      "-Itools/imgui/backends",
+      "-Itools/",
+      "-Iinclude/",
       "-c",
       "-o",
-      "build/imgui_widgets.o",
+      "build/imgui/imgui_widgets.o",
       "tools/imgui/imgui_widgets.cpp"
     ],
     "directory": "/home/ronaspe42/Projects/CPP_PROJECTS/Physix",
-    "output": "build/imgui_widgets.o"
+    "output": "build/imgui/imgui_widgets.o"
   },
   {
     "file": "tools/imgui/backends/imgui_impl_glfw.cpp",
     "arguments": [
       "/usr/bin/g++",
       "-std=c++17",
-      "-Itools/imgui",
-      "-Itools/imgui/backends",
-      "-Itools/",
       "-g",
       "-Wall",
       "-Wformat",
+      "-Itools/imgui",
+      "-Itools/imgui/backends",
+      "-Itools/",
+      "-Iinclude/",
       "-c",
       "-o",
-      "build/imgui_impl_glfw.o",
+      "build/imgui/backends/imgui_impl_glfw.o",
       "tools/imgui/backends/imgui_impl_glfw.cpp"
     ],
     "directory": "/home/ronaspe42/Projects/CPP_PROJECTS/Physix",
-    "output": "build/imgui_impl_glfw.o"
+    "output": "build/imgui/backends/imgui_impl_glfw.o"
   },
   {
     "file": "tools/imgui/backends/imgui_impl_opengl3.cpp",
     "arguments": [
       "/usr/bin/g++",
       "-std=c++17",
-      "-Itools/imgui",
-      "-Itools/imgui/backends",
-      "-Itools/",
       "-g",
       "-Wall",
       "-Wformat",
+      "-Itools/imgui",
+      "-Itools/imgui/backends",
+      "-Itools/",
+      "-Iinclude/",
       "-c",
       "-o",
-      "build/imgui_impl_opengl3.o",
+      "build/imgui/backends/imgui_impl_opengl3.o",
       "tools/imgui/backends/imgui_impl_opengl3.cpp"
     ],
     "directory": "/home/ronaspe42/Projects/CPP_PROJECTS/Physix",
-    "output": "build/imgui_impl_opengl3.o"
+    "output": "build/imgui/backends/imgui_impl_opengl3.o"
   }
 ]
