@@ -21,6 +21,73 @@ graph TD
     Framebuffer --> Viewport
 ```
 
+### 📁 Directory & Subsystem Layout
+
+To keep the engine codebase clean, modular, and maintainable, all files are organized into designated subsystem folders. Headers go into `include/` and source files go into `src/`:
+
+```text
+Physix/
+├── include/                   # All header files (.hpp)
+│   ├── core/                  # Core engine lifecycle, window, and input
+│   │   ├── app.hpp            # Main App manager coordinating subsystems
+│   │   ├── window.hpp         # GLFW window context manager wrapper
+│   │   ├── clock.hpp          # Precision fixed-timestep clock accumulator
+│   │   ├── input_manager.hpp  # Mouse/keyboard event dispatcher callbacks
+│   │   └── math_utils.hpp     # Mathematical structs & operators (Vec2, Cross, Dot)
+│   │
+│   ├── renderer/              # OpenGL wrappers and graphics routines
+│   │   ├── shader.hpp         # GLSL shader compiler & uniforms
+│   │   ├── vertex_array.hpp   # VAO wrapper
+│   │   ├── vertex_buffer.hpp  # VBO wrapper
+│   │   ├── index_buffer.hpp   # Element buffer (EBO) wrapper
+│   │   ├── framebuffer.hpp    # FBO (Off-screen render texture target)
+│   │   ├── camera.hpp         # 3D Orbit Camera & NDC mouse raycaster
+│   │   ├── renderer2d.hpp     # Primitive batching shapes renderer
+│   │   └── debug_draw.hpp     # Overlay overlays (AABBs, velocity arrows)
+│   │
+│   ├── physics/               # Physics simulation algorithms
+│   │   ├── rigid_body.hpp     # Body states, materials, mass properties
+│   │   ├── shape.hpp          # Collision boundary profiles (Circle, Box)
+│   │   ├── world.hpp          # Simulation database holding rigid bodies
+│   │   ├── integrator.hpp     # Semi-implicit Euler integration & sleep calculations
+│   │   ├── spatial_hash.hpp   # Broadphase grid filtering
+│   │   ├── collision.hpp      # Narrowphase intersection SAT solver
+│   │   ├── manifold.hpp       # Contact depth, normal, and point representation
+│   │   ├── solver.hpp         # Constraint sequential impulse solver
+│   │   └── fluid_sim.hpp      # Smoothed Particle Hydrodynamics (SPH)
+│   │
+│   ├── procgen/               # Terrain and object placement layout
+│   │   ├── terrain_gen.hpp    # Perlin heightmap mesh generator
+│   │   ├── object_spawner.hpp # Grids, circles, stacks layouts generator
+│   │   └── problem_factory.hpp# Preset physics scenarios definitions
+│   │
+│   └── ui/                    # Editor layout views and user interface
+│       ├── imgui_layer.hpp    # Main docking system workspace setup
+│       ├── viewport_panel.hpp # Displays FBO texture, handles focus/hover
+│       └── editor_panels.hpp  # Inspector panel and scenario loader panels
+│
+├── src/                       # All C++ implementations (.cpp)
+│   ├── core/                  # App, window, clock, input implementations
+│   ├── renderer/              # Shaders, camera, renderer, buffers, debug draw
+│   ├── physics/               # Physics ticker, broadphase, SAT, impulse solver, SPH
+│   ├── procgen/               # Procedural heightmap & layout spawners
+│   ├── ui/                    # UI layers, viewports, panels
+│   └── main.cpp               # Thin entry point instantiating & starting App
+│
+├── shaders/                   # GLSL shader source codes
+│   ├── flat.fs                # Vertex shader for 2D primitives
+│   ├── flat.vs                # Fragment shader for 2D primitives
+│   ├── fluid.fs               # Shader for soft radial fluid drops
+│   └── fluid.vs
+│
+├── tools/                     # Submodules / external dependencies
+│   ├── glad.c                 # GLAD pointer loader source
+│   ├── glad/                  # GLAD headers
+│   └── imgui/                 # Dear ImGui library source & backends
+│
+└── Makefile                   # Rules to compile src/**/*.cpp and link with ImGui/GLFW
+```
+
 ---
 
 ## 🗂️ Phase Directory

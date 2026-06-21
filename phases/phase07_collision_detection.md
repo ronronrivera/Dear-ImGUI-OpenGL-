@@ -4,11 +4,10 @@ This phase sets up the collision pipeline: a Broadphase Spatial Hash Grid filter
 
 ## 📁 Filenames & Directory Structure
 
-* **Broadphase Filter**:
-  * `include/core/spatial_hash.hpp` & `src/core/spatial_hash.cpp` — Maps rigid body AABBs into cell keys.
-* **Narrowphase Solver**:
-  * `include/core/collision.hpp` & `src/core/collision.cpp` — Intersection formulas (Circle-Circle, Circle-Box, Box-Box).
-  * `include/core/manifold.hpp` — Contains structural descriptions of contact details.
+* **Physics Subsystem**:
+  * `include/physics/spatial_hash.hpp` & `src/physics/spatial_hash.cpp` — Broadphase Spatial Hash Grid filters out non-overlapping bodies.
+  * `include/physics/collision.hpp` & `src/physics/collision.cpp` — Narrowphase formulas (Circle-Circle, Circle-Box, Box-Box) and contact point SAT routines.
+  * `include/physics/manifold.hpp` — Data structure storing contact points, depth, and contact normals.
 
 ## ⚙️ Core Variables
 

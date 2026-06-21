@@ -4,8 +4,8 @@ This phase implements constraint-based Sequential Impulse Resolution. It updates
 
 ## 📁 Filenames & Directory Structure
 
-* **Impulse Solver Engine**:
-  * `include/core/solver.hpp` & `src/core/solver.cpp` — Solves manifolds. Called inside `World::Step`.
+* **Physics Subsystem**:
+  * `include/physics/solver.hpp` & `src/physics/solver.cpp` — Constraint-based sequential impulse resolution. Called inside `World::Step` (`src/physics/world.cpp`).
 
 ## ⚙️ Core Variables
 

@@ -4,14 +4,16 @@ This phase creates the core structures that store physical state (bodies, vector
 
 ## 📁 Filenames & Directory Structure
 
-* **Math Utilities**:
+To separate physics simulation logic from the engine's core system components, files are placed in their respective modules:
+
+* **Core Subsystem**:
   * `include/core/math_utils.hpp` — Custom `Vec2` structure and helper operators.
-* **Physics Entities**:
-  * `include/core/rigid_body.hpp` & `src/core/rigid_body.cpp` — Defines bodies, properties, and configurations.
-  * `include/core/shape.hpp` — Subclasses representing Circle and Box bounds.
-* **Simulation Management**:
-  * `include/core/world.hpp` & `src/core/world.cpp` — Simulation workspace database.
-  * `include/support/clock.hpp` & `src/support/clock.cpp` — Semi-implicit tick accumulator.
+  * `include/core/clock.hpp` & `src/core/clock.cpp` — Semi-implicit fixed timestep clock accumulator.
+* **Physics Subsystem**:
+  * `include/physics/rigid_body.hpp` — State properties, Material, and configurations for physics bodies.
+  * `src/physics/rigid_body.cpp` — Mass calculations and state initializations.
+  * `include/physics/shape.hpp` — Base shape class and Circle/Box subclass boundary geometries.
+  * `include/physics/world.hpp` & `src/physics/world.cpp` — Simulation workspace database containing rigid bodies and gravity properties.
 
 ## ⚙️ Core Variables
 

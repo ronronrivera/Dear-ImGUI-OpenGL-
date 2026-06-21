@@ -5,13 +5,13 @@ This phase implements a 3D perspective camera positioned relative to the 2D XY p
 ## 📁 Filenames & Directory Structure
 
 * **Camera Engine**:
-  * `include/renderer/camera3d.hpp` & `src/renderer/camera3d.cpp` — Stores views, orientation, and mouse projection matrices.
+  * `include/renderer/camera.hpp` & `src/renderer/camera.cpp` — Stores views, orientation, and mouse projection matrices.
 * **Input Hooking**:
-  * `include/support/input_manager.hpp` & `src/support/input_manager.cpp` — Filters raw mouse/key events.
+  * `include/core/input_manager.hpp` & `src/core/input_manager.cpp` — Filters raw mouse/key events, hookable by window callback.
 
 ## ⚙️ Core Variables
 
-### `Camera3D` State
+### `Camera` State
 * `glm::vec3 m_Position` — World position.
 * `glm::vec3 m_Target` — Look-at target (anchor point on XY plane).
 * `glm::vec3 m_Up`, `m_Right`, `m_Front` — Direction vectors.
@@ -30,7 +30,7 @@ This phase implements a 3D perspective camera positioned relative to the 2D XY p
 
 ### 1. View & Orientation Calculations
 ```cpp
-void Camera3D::UpdateVectors() {
+void Camera::UpdateVectors() {
     // Spherical to Cartesian coordinate transformation for Orbit camera
     m_Position.x = m_Target.x + m_Distance * cos(glm::radians(m_Pitch)) * sin(glm::radians(m_Yaw));
     m_Position.y = m_Target.y + m_Distance * sin(glm::radians(m_Pitch));
@@ -41,25 +41,25 @@ void Camera3D::UpdateVectors() {
     m_Up    = glm::normalize(glm::cross(m_Right, m_Front));
 }
 
-glm::mat4 Camera3D::GetViewMatrix() const {
+glm::mat4 Camera::GetViewMatrix() const {
     return glm::lookAt(m_Position, m_Target, m_Up);
 }
 
-glm::mat4 Camera3D::GetProjectionMatrix() const {
+glm::mat4 Camera::GetProjectionMatrix() const {
     return glm::perspective(glm::radians(m_FOV), m_AspectRatio, 0.1f, 1000.0f);
 }
 ```
 
 ### 2. Camera Controls (Orbit, Pan, Zoom)
 ```cpp
-void Camera3D::ProcessMouseScroll(float yOffset) {
+void Camera::ProcessMouseScroll(float yOffset) {
     // Zoom control
     m_Distance -= yOffset * 2.0f;
     if (m_Distance < 1.0f) m_Distance = 1.0f;
     UpdateVectors();
 }
 
-void Camera3D::ProcessPan(float deltaX, float deltaY) {
+void Camera::ProcessPan(float deltaX, float deltaY) {
     // Calculate translate factor based on camera distance to make movement smooth
     float speed = m_Distance * 0.001f;
     
@@ -71,7 +71,7 @@ void Camera3D::ProcessPan(float deltaX, float deltaY) {
     UpdateVectors();
 }
 
-void Camera3D::ProcessRotate(float deltaX, float deltaY) {
+void Camera::ProcessRotate(float deltaX, float deltaY) {
     m_Yaw   += deltaX * 0.25f;
     m_Pitch += deltaY * 0.25f;
     
@@ -85,7 +85,7 @@ void Camera3D::ProcessRotate(float deltaX, float deltaY) {
 ### 3. Screen-to-World Raycasting (Mouse Picking)
 To click and grab rigid bodies, we must project screen clicks onto the physics plane (Z = 0):
 ```cpp
-glm::vec2 Camera3D::ScreenToWorld(const glm::vec2& screenPos, const glm::vec2& viewportSize) {
+glm::vec2 Camera::ScreenToWorld(const glm::vec2& screenPos, const glm::vec2& viewportSize) {
     // 1. Normalized Device Coordinates (NDC) [-1 to 1]
     float x = (2.0f * screenPos.x) / viewportSize.x - 1.0f;
     float y = 1.0f - (2.0f * screenPos.y) / viewportSize.y; // Flip Y axis

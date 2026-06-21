@@ -78,23 +78,33 @@ A 2.5D physics engine built from scratch in C++ and OpenGL. 2D rigid body simula
 
 ## 📂 Project Structure
 
+To keep the codebase clean, modular, and maintainable, files are organized into designated subsystem folders separating headers (`include/`) and source files (`src/`):
+
 ```text
 Physix/
-├── src/
-│   ├── core/              # Window, App, World, RigidBody, physics systems
-│   ├── renderer/          # Renderer, Camera3D, Shader, Framebuffer, DebugDraw
-│   ├── ui/                # ImGui panels — Viewport, ScenePanel, Inspector, ProblemBar
-│   ├── procgen/           # TerrainGen, ObjectSpawner, ProblemFactory
-│   ├── support/           # Clock, InputManager
-│   └── main.cpp
-├── include/               # Headers mirroring src/
-├── shaders/               # GLSL source files
-├── tools/
-│   ├── imgui/             # Dear ImGui + GLFW/OpenGL backends
-│   ├── glad/              # OpenGL loader
-│   └── stb/               # stb_perlin.h
-├── Makefile
-└── README.md
+├── include/               # All header files (.hpp)
+│   ├── core/              # Core lifecycle (App, Window, Clock, InputManager, MathUtils)
+│   ├── renderer/          # Shaders, Camera, Buffers, Framebuffer, Renderer2D, DebugDraw
+│   ├── physics/           # RigidBody, World, Integrator, SAT Collision, Impulse Solver, SPH Fluid
+│   ├── procgen/           # TerrainGen, ObjectSpawner, ProblemFactory scenario preset definitions
+│   └── ui/                # ImGui workspace, viewports, panels, inspectors
+│
+├── src/                   # All C++ implementations (.cpp) matching include/ structure
+│   ├── core/
+│   ├── renderer/
+│   ├── physics/
+│   ├── procgen/
+│   ├── ui/
+│   └── main.cpp           # Thin entry point instantiating and running the App
+│
+├── shaders/               # GLSL source files (flat shaders, fluid rendering)
+│
+├── tools/                 # External dependencies (ImGui, GLAD, stb_perlin.h)
+│   ├── imgui/
+│   ├── glad/
+│   └── stb/
+│
+└── Makefile               # Compiler and linker configuration
 ```
 
 ---

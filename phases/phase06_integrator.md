@@ -4,9 +4,9 @@ This phase implements the numerical integrator (Semi-implicit Euler) that moves 
 
 ## 📁 Filenames & Directory Structure
 
-* **Integrator Implementation**:
-  * `include/core/integrator.hpp` & `src/core/integrator.cpp` — Math integration utilities.
-  * In practice, these methods are driven inside the step loop in `src/core/world.cpp`.
+* **Physics Subsystem**:
+  * `include/physics/integrator.hpp` & `src/physics/integrator.cpp` — Numerical integration formulas (Semi-implicit Euler integration, sleep management).
+  * In practice, these methods are driven inside the step loop in `src/physics/world.cpp`.
 
 ## ⚙️ Core Variables
 

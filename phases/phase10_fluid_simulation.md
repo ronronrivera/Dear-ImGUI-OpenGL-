@@ -4,9 +4,9 @@ This phase implements a real-time Smoothed Particle Hydrodynamics (SPH) fluid si
 
 ## 📁 Filenames & Directory Structure
 
-* **SPH Simulator Engine**:
-  * `include/core/fluid_sim.hpp` & `src/core/fluid_sim.cpp` — Fluid simulation loop and kernels.
-* **SPH Shaders**:
+* **Physics Subsystem**:
+  * `include/physics/fluid_sim.hpp` & `src/physics/fluid_sim.cpp` — Fluid simulation loop and SPH kernels.
+* **Renderer Subsystem (Shaders)**:
   * `shaders/fluid.vs` & `shaders/fluid.fs` — Displays particles as soft radial drops instead of solid circles.
 
 ## ⚙️ Core Variables
