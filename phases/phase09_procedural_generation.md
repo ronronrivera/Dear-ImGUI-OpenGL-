@@ -30,93 +30,133 @@ This phase implements procedural 1D heightmap generation (using Perlin noise) to
 * **Terrain Builder**: Generates static boundary structures representing hills, valleys, or flat planes.
 * **Level Populator**: Emplaces collections of dynamic rigid bodies in logical arrangements (e.g. pyramids, neat grid matrices, columns).
 
-## 📝 Pseudo-code / Flow of Execution
+## 📝 Class Structures & Flow of Execution
 
-### 1. Generating Procedural Terrain
-To generate hills, we sample 1D Perlin noise at spaced horizontal intervals and construct a chain of static colliders:
+### 1. `include/procgen/terrain_gen.hpp`
 ```cpp
-#include "stb/stb_perlin.h"
+#pragma once
+#include "physics/world.hpp"
+#include <vector>
 
-void TerrainGen::Generate(World& world, TerrainConfig config) {
-    float step = config.Width / (float)config.SegmentCount;
-    std::vector<Vec2> points;
+namespace Physix {
+    struct TerrainConfig {
+        float Width = 100.0f;
+        float MaxHeight = 10.0f;
+        int SegmentCount = 200;
+        float NoiseScale = 0.05f;
+        unsigned int Seed = 0;
+    };
 
-    // 1. Calculate heights using fractal Brownian motion (fBm) or simple noise
-    for (int i = 0; i <= config.SegmentCount; ++i) {
-        float x = i * step - (config.Width * 0.5f); // Center terrain around x=0
-        
-        // Sample Perlin noise (we pass seed as the Y input to vary heightmaps)
-        float noiseVal = stb_perlin_noise3(x * config.NoiseScale, (float)config.Seed, 0.0f, 0, 0, 0);
-        
-        // Scale values to engine coordinates
-        float y = noiseVal * config.MaxHeight;
-        points.push_back(Vec2(x, y));
-    }
-
-    // 2. Clear old terrain segments in the World
-    world.RemoveTerrainSegments();
-
-    // 3. Create static thin box segments between successive height points
-    for (size_t i = 0; i < points.size() - 1; ++i) {
-        Vec2 p0 = points[i];
-        Vec2 p1 = points[i + 1];
-        
-        Vec2 midPoint = (p0 + p1) * 0.5f;
-        Vec2 diff = p1 - p0;
-        float segmentLength = diff.Length();
-        float angle = std::atan2(diff.y, diff.x);
-
-        // Create box representing ground thickness
-        float thickness = 0.5f; 
-        RigidBody* segment = new RigidBody();
-        segment->Position = midPoint;
-        segment->Size = Vec2(segmentLength, thickness);
-        segment->Rotation = angle;
-        segment->IsStatic = true;
-        segment->ComputeMassProperties();
-
-        world.AddBody(segment);
-    }
+    class TerrainGen {
+    public:
+        static void Generate(World& world, const TerrainConfig& config);
+    };
 }
 ```
 
-### 2. Spawning Object Pyramids/Grids
-Grid stack layouts are useful for testing multi-body collisions and solver stability (stack collapse tests).
+### 2. `src/procgen/terrain_gen.cpp`
 ```cpp
-void ObjectSpawner::SpawnStack(World& world, Vec2 bottomCenter, int rows, int cols, float size, bool spawnCircles) {
-    float halfColWidth = (cols * size * ObjectSpacing) * 0.5f;
-    float startX = bottomCenter.x - halfColWidth + (size * 0.5f);
-    float startY = bottomCenter.y + (size * 0.5f);
+#include "procgen/terrain_gen.hpp"
+#include "physics/rigid_body.hpp"
+#include "stb/stb_perlin.h"
+#include <cmath>
 
-    for (int r = 0; r < rows; ++r) {
-        for (int c = 0; c < cols; ++c) {
-            // Offset coordinates slightly per row to stagger stacks
-            float x = startX + c * size * ObjectSpacing;
-            float y = startY + r * size * ObjectSpacing;
+namespace Physix {
+    void TerrainGen::Generate(World& world, const TerrainConfig& config) {
+        float step = config.Width / static_cast<float>(config.SegmentCount);
+        std::vector<Vec2> points;
 
-            RigidBody* b = new RigidBody();
-            b->Position = Vec2(x, y);
+        // 1. Calculate heights using Perlin noise
+        for (int i = 0; i <= config.SegmentCount; ++i) {
+            float x = i * step - (config.Width * 0.5f); // Center terrain around x=0
             
-            if (spawnCircles) {
-                b->Type = ShapeType::CIRCLE;
-                b->Radius = size * 0.5f;
-            } else {
-                b->Type = ShapeType::BOX;
-                b->Size = Vec2(size, size);
-            }
+            // Sample Perlin noise (we pass seed as the Y input to vary heightmaps)
+            float noiseVal = stb_perlin_noise3(x * config.NoiseScale, static_cast<float>(config.Seed), 0.0f, 0, 0, 0);
             
-            b->IsStatic = false;
-            b->Material.Density = 1.0f;
-            b->Material.Restitution = 0.2f;
-            b->Material.Friction = 0.3f;
-            b->ComputeMassProperties();
+            // Scale values to engine coordinates
+            float y = noiseVal * config.MaxHeight;
+            points.push_back(Vec2(x, y));
+        }
 
-            world.AddBody(b);
+        // 2. Clear old terrain segments in the World (if implemented)
+        // world.ClearTerrain();
+
+        // 3. Create static thin box segments between successive height points
+        for (size_t i = 0; i < points.size() - 1; ++i) {
+            Vec2 p0 = points[i];
+            Vec2 p1 = points[i + 1];
+            
+            Vec2 midPoint = (p0 + p1) * 0.5f;
+            Vec2 diff = p1 - p0;
+            float segmentLength = diff.Length();
+            float angle = std::atan2(diff.y, diff.x);
+
+            // Create box representing ground thickness
+            float thickness = 0.5f; 
+            auto boxShape = std::make_shared<BoxShape>(segmentLength, thickness);
+            RigidBody* segment = new RigidBody(boxShape, midPoint);
+            segment->Rotation = angle;
+            segment->IsStatic = true;
+            segment->ComputeMassProperties();
+
+            world.AddBody(segment);
         }
     }
 }
 ```
-### 3. Triggering from ImGui
+
+### 3. `include/procgen/object_spawner.hpp`
+```cpp
+#pragma once
+#include "physics/world.hpp"
+
+namespace Physix {
+    class ObjectSpawner {
+    public:
+        static void SpawnStack(World& world, Vec2 bottomCenter, int rows, int cols, float size, bool spawnCircles);
+    };
+}
+```
+
+### 4. `src/procgen/object_spawner.cpp`
+```cpp
+#include "procgen/object_spawner.hpp"
+
+namespace Physix {
+    void ObjectSpawner::SpawnStack(World& world, Vec2 bottomCenter, int rows, int cols, float size, bool spawnCircles) {
+        float spacing = 1.2f;
+        float halfColWidth = (cols * size * spacing) * 0.5f;
+        float startX = bottomCenter.x - halfColWidth + (size * 0.5f);
+        float startY = bottomCenter.y + (size * 0.5f);
+
+        for (int r = 0; r < rows; ++r) {
+            for (int c = 0; c < cols; ++c) {
+                // Offset coordinates slightly per row to stagger stacks
+                float x = startX + c * size * spacing;
+                float y = startY + r * size * spacing;
+
+                std::shared_ptr<Shape> shape;
+                if (spawnCircles) {
+                    shape = std::make_shared<CircleShape>(size * 0.5f);
+                } else {
+                    shape = std::make_shared<BoxShape>(size, size);
+                }
+
+                RigidBody* b = new RigidBody(shape, Vec2(x, y));
+                b->IsStatic = false;
+                b->Material.Density = 1.0f;
+                b->Material.Restitution = 0.2f;
+                b->Material.Friction = 0.3f;
+                b->ComputeMassProperties();
+
+                world.AddBody(b);
+            }
+        }
+    }
+}
+```
+
+### 5. Triggering from ImGui
 ```cpp
 ImGui::Begin("Spawner Panel");
 static int rows = 5, cols = 5;

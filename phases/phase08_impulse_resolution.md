@@ -29,134 +29,183 @@ This phase implements constraint-based Sequential Impulse Resolution. It updates
 
 ## 📝 Pseudo-code / Flow of Execution
 
-For each frame, solving passes run over active manifolds:
+## 📝 Class Structures & Flow of Execution
 
-### 1. Pre-Step (Calculate Cache & Baumgarte Bias)
+### 1. `include/physics/solver.hpp`
 ```cpp
-void Solver::PreStep(CollisionManifold& m, float dt) {
-    RigidBody* A = m.BodyA;
-    RigidBody* B = m.BodyB;
+#pragma once
+#include "physics/manifold.hpp"
+#include <vector>
 
-    for (int i = 0; i < m.ContactCount; ++i) {
-        Vec2 cp = m.Contacts[i];
-        Vec2 rA = cp - A->Position;
-        Vec2 rB = cp - B->Position;
-        
-        // Save relative positions to cache
-        m.SolverCache[i].rA = rA;
-        m.SolverCache[i].rB = rB;
+namespace Physix {
+    class Solver {
+    public:
+        Solver();
+        ~Solver();
 
-        // 1. Calculate Effective Mass along normal: 
-        // InvMass_eff = InvMass_A + InvMass_B + ((r_A x n)^2 / I_A) + ((r_B x n)^2 / I_B)
-        float rnA = Cross(rA, m.Normal);
-        float rnB = Cross(rB, m.Normal);
-        float invNormalMass = A->InvMass + B->InvMass + (rnA * rnA * A->InvInertia) + (rnB * rnB * B->InvInertia);
-        m.SolverCache[i].NormalMass = invNormalMass > 0.0f ? 1.0f / invNormalMass : 0.0f;
+        void ResolveCollisions(std::vector<CollisionManifold>& manifolds, float dt);
 
-        // 2. Calculate Effective Mass along tangent (friction axis)
-        Vec2 tangent = Vec2(-m.Normal.y, m.Normal.x); // Orthogonal normal
-        float rtA = Cross(rA, tangent);
-        float rtB = Cross(rB, tangent);
-        float invTangentMass = A->InvMass + B->InvMass + (rtA * rtA * A->InvInertia) + (rtB * rtB * B->InvInertia);
-        m.SolverCache[i].TangentMass = invTangentMass > 0.0f ? 1.0f / invTangentMass : 0.0f;
+    private:
+        void PreStep(CollisionManifold& m, float dt);
+        void ResolveVelocities(CollisionManifold& m);
+        void ResolvePositions(CollisionManifold& m);
 
-        // 3. Baumgarte Position Correction Bias
-        float penetration = std::max(0.0f, m.PenetrationDepth - PENETRATION_ALLOWANCE);
-        m.SolverCache[i].Bias = (POSITION_CORRECTION_PERCENT / dt) * penetration;
+        int m_VelocityIterations = 8;
+        int m_PositionIterations = 3;
+        static constexpr float PENETRATION_ALLOWANCE = 0.01f;
+        static constexpr float POSITION_CORRECTION_PERCENT = 0.2f;
+    };
+}
+```
 
-        // 4. Elastic Restitution Bias
-        Vec2 relativeVel = (B->Velocity + Cross(B->AngularVelocity, rB)) - 
-                            (A->Velocity + Cross(A->AngularVelocity, rA));
-        float normalVel = Dot(relativeVel, m.Normal);
-        
-        // If relative velocity is fast enough, apply bounciness
-        float restitution = std::min(A->Material.Restitution, B->Material.Restitution);
-        if (normalVel < -1.0f) {
-            m.SolverCache[i].Bias += -restitution * normalVel;
+### 2. `src/physics/solver.cpp`
+```cpp
+#include "physics/solver.hpp"
+#include <algorithm>
+#include <cmath>
+
+namespace Physix {
+    Solver::Solver() {}
+    Solver::~Solver() {}
+
+    void Solver::ResolveCollisions(std::vector<CollisionManifold>& manifolds, float dt) {
+        // 1. Pre-Step (Calculate Cache & Baumgarte Bias)
+        for (auto& m : manifolds) {
+            PreStep(m, dt);
+        }
+
+        // 2. Velocity Solver Iterations
+        for (int iter = 0; iter < m_VelocityIterations; ++iter) {
+            for (auto& m : manifolds) {
+                ResolveVelocities(m);
+            }
+        }
+
+        // 3. Position Corrector
+        for (int iter = 0; iter < m_PositionIterations; ++iter) {
+            for (auto& m : manifolds) {
+                ResolvePositions(m);
+            }
         }
     }
-}
-```
 
-### 2. Velocity Solver Iterations
-This function runs `VelocityIterations` times per frame step:
-```cpp
-void Solver::ResolveVelocities(CollisionManifold& m) {
-    RigidBody* A = m.BodyA;
-    RigidBody* B = m.BodyB;
-    Vec2 normal = m.Normal;
-    Vec2 tangent = Vec2(-normal.y, normal.x);
+    void Solver::PreStep(CollisionManifold& m, float dt) {
+        RigidBody* A = m.BodyA;
+        RigidBody* B = m.BodyB;
 
-    for (int i = 0; i < m.ContactCount; ++i) {
-        auto& cache = m.SolverCache[i];
+        for (int i = 0; i < m.ContactCount; ++i) {
+            Vec2 cp = m.Contacts[i];
+            Vec2 rA = cp - A->Position;
+            Vec2 rB = cp - B->Position;
+            
+            // Save relative positions to cache
+            m.SolverCache[i].rA = rA;
+            m.SolverCache[i].rB = rB;
 
-        // 1. Calculate Relative Contact Velocity
-        Vec2 vA = A->Velocity + Cross(A->AngularVelocity, cache.rA);
-        Vec2 vB = B->Velocity + Cross(B->AngularVelocity, cache.rB);
-        Vec2 rv = vB - vA;
+            // 1. Calculate Effective Mass along normal: 
+            // InvMass_eff = InvMass_A + InvMass_B + ((r_A x n)^2 / I_A) + ((r_B x n)^2 / I_B)
+            float rnA = Cross(rA, m.Normal);
+            float rnB = Cross(rB, m.Normal);
+            float invNormalMass = A->InvMass + B->InvMass + (rnA * rnA * A->InvInertia) + (rnB * rnB * B->InvInertia);
+            m.SolverCache[i].NormalMass = invNormalMass > 0.0f ? 1.0f / invNormalMass : 0.0f;
 
-        // 2. Normal Impulse
-        float vn = Dot(rv, normal);
-        float lambda = -cache.NormalMass * (vn - cache.Bias);
+            // 2. Calculate Effective Mass along tangent (friction axis)
+            Vec2 tangent = Vec2(-m.Normal.y, m.Normal.x); // Orthogonal normal
+            float rtA = Cross(rA, tangent);
+            float rtB = Cross(rB, tangent);
+            float invTangentMass = A->InvMass + B->InvMass + (rtA * rtA * A->InvInertia) + (rtB * rtB * B->InvInertia);
+            m.SolverCache[i].TangentMass = invTangentMass > 0.0f ? 1.0f / invTangentMass : 0.0f;
 
-        // Clamp accumulated impulse so bodies can only push, not pull
-        float oldNormalImpulse = cache.AccumulatedNormalImpulse;
-        cache.AccumulatedNormalImpulse = std::max(oldNormalImpulse + lambda, 0.0f);
-        lambda = cache.AccumulatedNormalImpulse - oldNormalImpulse;
+            // 3. Baumgarte Position Correction Bias
+            float penetration = std::max(0.0f, m.PenetrationDepth - PENETRATION_ALLOWANCE);
+            m.SolverCache[i].Bias = (POSITION_CORRECTION_PERCENT / dt) * penetration;
 
-        // Apply impulse to change velocities
-        Vec2 impulseVec = normal * lambda;
-        A->Velocity = A->Velocity - impulseVec * A->InvMass;
-        A->AngularVelocity -= A->InvInertia * Cross(cache.rA, impulseVec);
-        
-        B->Velocity = B->Velocity + impulseVec * B->InvMass;
-        B->AngularVelocity += B->InvInertia * Cross(cache.rB, impulseVec);
-
-        // 3. Friction (Tangent) Impulse
-        // Re-read velocities
-        vA = A->Velocity + Cross(A->AngularVelocity, cache.rA);
-        vB = B->Velocity + Cross(B->AngularVelocity, cache.rB);
-        rv = vB - vA;
-
-        float vt = Dot(rv, tangent);
-        float lambdaT = -cache.TangentMass * vt;
-
-        // Clamp using Coulomb's friction law: |tangent_impulse| <= normal_impulse * mu
-        float mu = std::sqrt(A->Material.Friction * B->Material.Friction);
-        float maxFriction = cache.AccumulatedNormalImpulse * mu;
-
-        float oldTangentImpulse = cache.AccumulatedTangentImpulse;
-        cache.AccumulatedTangentImpulse = std::clamp(oldTangentImpulse + lambdaT, -maxFriction, maxFriction);
-        lambdaT = cache.AccumulatedTangentImpulse - oldTangentImpulse;
-
-        // Apply friction impulse
-        Vec2 frictionVec = tangent * lambdaT;
-        A->Velocity = A->Velocity - frictionVec * A->InvMass;
-        A->AngularVelocity -= A->InvInertia * Cross(cache.rA, frictionVec);
-
-        B->Velocity = B->Velocity + frictionVec * B->InvMass;
-        B->AngularVelocity += B->InvInertia * Cross(cache.rB, frictionVec);
+            // 4. Elastic Restitution Bias
+            Vec2 relativeVel = (B->Velocity + Cross(B->AngularVelocity, rB)) - 
+                                (A->Velocity + Cross(A->AngularVelocity, rA));
+            float normalVel = Dot(relativeVel, m.Normal);
+            
+            // If relative velocity is fast enough, apply bounciness
+            float restitution = std::min(A->Material.Restitution, B->Material.Restitution);
+            if (normalVel < -1.0f) {
+                m.SolverCache[i].Bias += -restitution * normalVel;
+            }
+        }
     }
-}
-```
 
-### 3. Position Corrector
-An alternative to Baumgarte stabilization is projecting position changes directly without changing velocity, which eliminates restitution bounce issues at low frames:
-```cpp
-void Solver::ResolvePositions(CollisionManifold& m) {
-    RigidBody* A = m.BodyA;
-    RigidBody* B = m.BodyB;
+    void Solver::ResolveVelocities(CollisionManifold& m) {
+        RigidBody* A = m.BodyA;
+        RigidBody* B = m.BodyB;
+        Vec2 normal = m.Normal;
+        Vec2 tangent = Vec2(-normal.y, normal.x);
 
-    float penetration = std::max(0.0f, m.PenetrationDepth - PENETRATION_ALLOWANCE);
-    if (penetration <= 0.0f) return;
+        for (int i = 0; i < m.ContactCount; ++i) {
+            auto& cache = m.SolverCache[i];
 
-    // Direct translation projection factor
-    float totalInvMass = A->InvMass + B->InvMass;
-    if (totalInvMass <= 0.0f) return;
+            // 1. Calculate Relative Contact Velocity
+            Vec2 vA = A->Velocity + Cross(A->AngularVelocity, cache.rA);
+            Vec2 vB = B->Velocity + Cross(B->AngularVelocity, cache.rB);
+            Vec2 rv = vB - vA;
 
-    Vec2 correction = m.Normal * (penetration / totalInvMass) * POSITION_CORRECTION_PERCENT;
+            // 2. Normal Impulse
+            float vn = Dot(rv, normal);
+            float lambda = -cache.NormalMass * (vn - cache.Bias);
 
-    if (!A->IsStatic) A->Position = A->Position - correction * A->InvMass;
-    if (!B->IsStatic) B->Position = B->Position + correction * B->InvMass;
+            // Clamp accumulated impulse so bodies can only push, not pull
+            float oldNormalImpulse = cache.AccumulatedNormalImpulse;
+            cache.AccumulatedNormalImpulse = std::max(oldNormalImpulse + lambda, 0.0f);
+            lambda = cache.AccumulatedNormalImpulse - oldNormalImpulse;
+
+            // Apply impulse to change velocities
+            Vec2 impulseVec = normal * lambda;
+            A->Velocity = A->Velocity - impulseVec * A->InvMass;
+            A->AngularVelocity -= A->InvInertia * Cross(cache.rA, impulseVec);
+            
+            B->Velocity = B->Velocity + impulseVec * B->InvMass;
+            B->AngularVelocity += B->InvInertia * Cross(cache.rB, impulseVec);
+
+            // 3. Friction (Tangent) Impulse
+            // Re-read velocities
+            vA = A->Velocity + Cross(A->AngularVelocity, cache.rA);
+            vB = B->Velocity + Cross(B->AngularVelocity, cache.rB);
+            rv = vB - vA;
+
+            float vt = Dot(rv, tangent);
+            float lambdaT = -cache.TangentMass * vt;
+
+            // Clamp using Coulomb's friction law: |tangent_impulse| <= normal_impulse * mu
+            float mu = std::sqrt(A->Material.Friction * B->Material.Friction);
+            float maxFriction = cache.AccumulatedNormalImpulse * mu;
+
+            float oldTangentImpulse = cache.AccumulatedTangentImpulse;
+            cache.AccumulatedTangentImpulse = std::clamp(oldTangentImpulse + lambdaT, -maxFriction, maxFriction);
+            lambdaT = cache.AccumulatedTangentImpulse - oldTangentImpulse;
+
+            // Apply friction impulse
+            Vec2 frictionVec = tangent * lambdaT;
+            A->Velocity = A->Velocity - frictionVec * A->InvMass;
+            A->AngularVelocity -= A->InvInertia * Cross(cache.rA, frictionVec);
+
+            B->Velocity = B->Velocity + frictionVec * B->InvMass;
+            B->AngularVelocity += B->InvInertia * Cross(cache.rB, frictionVec);
+        }
+    }
+
+    void Solver::ResolvePositions(CollisionManifold& m) {
+        RigidBody* A = m.BodyA;
+        RigidBody* B = m.BodyB;
+
+        float penetration = std::max(0.0f, m.PenetrationDepth - PENETRATION_ALLOWANCE);
+        if (penetration <= 0.0f) return;
+
+        // Direct translation projection factor
+        float totalInvMass = A->InvMass + B->InvMass;
+        if (totalInvMass <= 0.0f) return;
+
+        Vec2 correction = m.Normal * (penetration / totalInvMass) * POSITION_CORRECTION_PERCENT;
+
+        if (!A->IsStatic) A->Position = A->Position - correction * A->InvMass;
+        if (!B->IsStatic) B->Position = B->Position + correction * B->InvMass;
+    }
 }
 ```

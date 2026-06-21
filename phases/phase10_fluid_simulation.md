@@ -29,127 +29,194 @@ This phase implements a real-time Smoothed Particle Hydrodynamics (SPH) fluid si
 * **SPH Engine**: Computes fluid particle interactions. Uses a specialized spatial hash to quickly find nearby fluid particles.
 * **Fluid-Rigid Coupling**: Checks fluid particles against rigid body boundaries (e.g. circle/box colliders), applying boundary impulse responses to the fluid and equal-and-opposite forces to dynamic rigid bodies.
 
-## 📝 Pseudo-code / Flow of Execution
+## 📝 Class Structures & Flow of Execution
 
-### 1. SPH Mathematical Kernels
-We use Poly6 for density and Spiky kernels for pressure gradients:
+### 1. `include/physics/fluid_sim.hpp`
 ```cpp
-// Poly6 Kernel for density computation
-float KernelPoly6(float rSq, float h) {
-    if (rSq < 0.0f || rSq >= h * h) return 0.0f;
-    float term = h * h - rSq;
-    return (315.0f / (64.0f * M_PI * std::pow(h, 9))) * term * term * term;
-}
+#pragma once
+#include "core/math_utils.hpp"
+#include "physics/rigid_body.hpp"
+#include <vector>
 
-// Spiky Kernel Gradient factor for pressure forces
-Vec2 KernelSpikyGradient(const Vec2& rVec, float r, float h) {
-    if (r <= 0.0f || r >= h) return Vec2(0.0f, 0.0f);
-    float term = h - r;
-    float scalar = -45.0f / (M_PI * std::pow(h, 6)) * term * term;
-    return rVec * (scalar / r);
-}
+namespace Physix {
+    struct FluidParticle {
+        Vec2 Position;
+        Vec2 Velocity;
+        Vec2 Force;
+        float Density = 0.0f;
+        float Pressure = 0.0f;
+    };
 
-// Laplacian of Viscosity Kernel
-float KernelViscosityLaplacian(float r, float h) {
-    if (r >= h) return 0.0f;
-    return (45.0f / (M_PI * std::pow(h, 6))) * (h - r);
+    struct FluidConfig {
+        float ParticleRadius = 0.15f;
+        float H = 0.4f; // Smoothing length
+        float RestDensity = 1000.0f;
+        float GasConstant = 2000.0f;
+        float Viscosity = 250.0f;
+        Vec2 Gravity = Vec2(0.0f, -9.81f);
+    };
+
+    class FluidSim {
+    public:
+        FluidSim();
+        ~FluidSim();
+
+        void AddParticle(const FluidParticle& particle);
+        void Clear();
+        void Step(float dt, const std::vector<RigidBody*>& rigidBodies);
+
+        const std::vector<FluidParticle>& GetParticles() const { return m_Particles; }
+
+    private:
+        void HashParticles();
+        std::vector<int> GetNeighbors(const Vec2& position);
+        void ResolveObstacles(FluidParticle& p, const std::vector<RigidBody*>& rigidBodies);
+
+        // SPH Mathematical Kernels
+        float KernelPoly6(float rSq, float h) const;
+        Vec2 KernelSpikyGradient(const Vec2& rVec, float r, float h) const;
+        float KernelViscosityLaplacian(float r, float h) const;
+
+        std::vector<FluidParticle> m_Particles;
+        FluidConfig m_Config;
+        float m_ParticleMass = 1.0f;
+    };
 }
 ```
 
-### 2. SPH Simulation Step
+### 2. `src/physics/fluid_sim.cpp`
 ```cpp
-void FluidSim::Step(float dt, const std::vector<RigidBody*>& rigidBodies) {
-    // Step 1: Broadphase - Hash particles into spatial grid
-    HashParticles();
+#include "physics/fluid_sim.hpp"
+#include <cmath>
+#include <algorithm>
 
-    // Step 2: Compute Density & Pressure
-    for (size_t i = 0; i < Particles.size(); ++i) {
-        float densitySum = 0.0f;
-        auto neighbors = GetNeighbors(Particles[i].Position);
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
-        for (int idx : neighbors) {
-            Vec2 diff = Particles[i].Position - Particles[idx].Position;
-            float rSq = diff.LengthSq();
-            densitySum += Mass * KernelPoly6(rSq, H);
+namespace Physix {
+    FluidSim::FluidSim() {}
+    FluidSim::~FluidSim() {}
+
+    void FluidSim::AddParticle(const FluidParticle& particle) {
+        m_Particles.push_back(particle);
+    }
+
+    void FluidSim::Clear() {
+        m_Particles.clear();
+    }
+
+    float FluidSim::KernelPoly6(float rSq, float h) const {
+        if (rSq < 0.0f || rSq >= h * h) return 0.0f;
+        float term = h * h - rSq;
+        return (315.0f / (64.0f * static_cast<float>(M_PI) * std::pow(h, 9))) * term * term * term;
+    }
+
+    Vec2 FluidSim::KernelSpikyGradient(const Vec2& rVec, float r, float h) const {
+        if (r <= 0.0f || r >= h) return Vec2(0.0f, 0.0f);
+        float term = h - r;
+        float scalar = -45.0f / (static_cast<float>(M_PI) * std::pow(h, 6)) * term * term;
+        return rVec * (scalar / r);
+    }
+
+    float FluidSim::KernelViscosityLaplacian(float r, float h) const {
+        if (r >= h) return 0.0f;
+        return (45.0f / (static_cast<float>(M_PI) * std::pow(h, 6))) * (h - r);
+    }
+
+    void FluidSim::HashParticles() {
+        // Broadphase spatial hashing logic
+    }
+
+    std::vector<int> FluidSim::GetNeighbors(const Vec2& position) {
+        // Return nearby particle indices from spatial hash
+        std::vector<int> neighbors;
+        for (size_t i = 0; i < m_Particles.size(); ++i) {
+            neighbors.push_back(static_cast<int>(i));
+        }
+        return neighbors;
+    }
+
+    void FluidSim::Step(float dt, const std::vector<RigidBody*>& rigidBodies) {
+        // Step 1: Broadphase - Hash particles into spatial grid
+        HashParticles();
+
+        // Step 2: Compute Density & Pressure
+        for (size_t i = 0; i < m_Particles.size(); ++i) {
+            float densitySum = 0.0f;
+            auto neighbors = GetNeighbors(m_Particles[i].Position);
+
+            for (int idx : neighbors) {
+                Vec2 diff = m_Particles[i].Position - m_Particles[idx].Position;
+                float rSq = diff.LengthSq();
+                densitySum += m_ParticleMass * KernelPoly6(rSq, m_Config.H);
+            }
+
+            m_Particles[i].Density = std::max(densitySum, m_Config.RestDensity);
+            m_Particles[i].Pressure = m_Config.GasConstant * (m_Particles[i].Density - m_Config.RestDensity);
         }
 
-        Particles[i].Density = std::max(densitySum, RestDensity); // Clamp to rest density
-        
-        // Equation of State (Tait Equation variant)
-        // P = k * (rho - rho_0)
-        Particles[i].Pressure = GasConstant * (Particles[i].Density - RestDensity);
-    }
+        // Step 3: Compute Forces (Pressure + Viscosity + Gravity)
+        for (size_t i = 0; i < m_Particles.size(); ++i) {
+            Vec2 pressureForce(0.0f, 0.0f);
+            Vec2 viscosityForce(0.0f, 0.0f);
+            auto neighbors = GetNeighbors(m_Particles[i].Position);
 
-    // Step 3: Compute Forces (Pressure + Viscosity + Gravity)
-    for (size_t i = 0; i < Particles.size(); ++i) {
-        Vec2 pressureForce(0.0f, 0.0f);
-        Vec2 viscosityForce(0.0f, 0.0f);
-        auto neighbors = GetNeighbors(Particles[i].Position);
+            for (int idx : neighbors) {
+                if (idx == static_cast<int>(i)) continue;
 
-        for (int idx : neighbors) {
-            if (idx == (int)i) continue;
+                Vec2 diff = m_Particles[i].Position - m_Particles[idx].Position;
+                float r = diff.Length();
+                if (r >= m_Config.H || r < 0.0001f) continue;
 
-            Vec2 diff = Particles[i].Position - Particles[idx].Position;
-            float r = diff.Length();
-            if (r >= H || r < 0.0001f) continue;
+                float pTerm = (m_Particles[i].Pressure + m_Particles[idx].Pressure) / (2.0f * m_Particles[idx].Density);
+                pressureForce = pressureForce - KernelSpikyGradient(diff, r, m_Config.H) * (m_ParticleMass * pTerm);
 
-            // Pressure Force: f = -Sum[ m * (P_i + P_j) / (2 * rho_j) * GradW ]
-            float pTerm = (Particles[i].Pressure + Particles[idx].Pressure) / (2.0f * Particles[idx].Density);
-            pressureForce = pressureForce - KernelSpikyGradient(diff, r, H) * (Mass * pTerm);
+                Vec2 vDiff = m_Particles[idx].Velocity - m_Particles[i].Velocity;
+                float vTerm = KernelViscosityLaplacian(r, m_Config.H) / m_Particles[idx].Density;
+                viscosityForce = viscosityForce + vDiff * (m_Config.Viscosity * m_ParticleMass * vTerm);
+            }
 
-            // Viscosity Force: f = mu * Sum[ m * (v_j - v_i) / rho_j * LapW ]
-            Vec2 vDiff = Particles[idx].Velocity - Particles[i].Velocity;
-            float vTerm = KernelViscosityLaplacian(r, H) / Particles[idx].Density;
-            viscosityForce = viscosityForce + vDiff * (Viscosity * Mass * vTerm);
+            Vec2 gravityForce = m_Config.Gravity * m_Particles[i].Density;
+            m_Particles[i].Force = pressureForce + viscosityForce + gravityForce;
         }
 
-        Vec2 gravityForce = Gravity * Particles[i].Density;
-        Particles[i].Force = pressureForce + viscosityForce + gravityForce;
+        // Step 4: Integrate Particles & Resolve Obstacles
+        for (size_t i = 0; i < m_Particles.size(); ++i) {
+            m_Particles[i].Velocity = m_Particles[i].Velocity + (m_Particles[i].Force / m_Particles[i].Density) * dt;
+            m_Particles[i].Position = m_Particles[i].Position + m_Particles[i].Velocity * dt;
+
+            ResolveObstacles(m_Particles[i], rigidBodies);
+        }
     }
 
-    // Step 4: Integrate Particles & Resolve Rigid Obstacle Collisions
-    for (size_t i = 0; i < Particles.size(); ++i) {
-        // Semi-implicit Euler integration
-        Particles[i].Velocity = Particles[i].Velocity + (Particles[i].Force / Particles[i].Density) * dt;
-        Particles[i].Position = Particles[i].Position + Particles[i].Velocity * dt;
-
-        // Resolve boundaries & rigid body obstacles
-        ResolveObstacles(Particles[i], rigidBodies);
-    }
-}
-```
-
-### 3. Fluid-Rigid Boundary Penetration
-```cpp
-void FluidSim::ResolveObstacles(FluidParticle& p, const std::vector<RigidBody*>& rigidBodies) {
-    for (RigidBody* body : rigidBodies) {
-        // Run a custom simplified collision check between fluid particle and rigid body
-        if (body->Type == ShapeType::CIRCLE) {
-            Vec2 diff = p.Position - body->Position;
-            float dist = diff.Length();
-            float rLimit = body->Radius + ParticleRadius;
-            
-            if (dist < rLimit) {
-                Vec2 normal = diff.Normalized();
-                float penetration = rLimit - dist;
+    void FluidSim::ResolveObstacles(FluidParticle& p, const std::vector<RigidBody*>& rigidBodies) {
+        for (RigidBody* body : rigidBodies) {
+            if (body->GetType() == ShapeType::CIRCLE) {
+                auto circle = std::static_pointer_cast<CircleShape>(body->GetShape());
+                Vec2 diff = p.Position - body->Position;
+                float dist = diff.Length();
+                float rLimit = circle->GetRadius() + m_Config.ParticleRadius;
                 
-                // Repel particle from surface
-                p.Position = p.Position + normal * penetration;
-                
-                // Mirror velocity along normal (elastic collision)
-                float vn = Dot(p.Velocity, normal);
-                if (vn < 0.0f) {
-                    p.Velocity = p.Velocity - normal * (vn * 1.5f); // 1.5 multiplier for bounce
-                }
-                
-                // Apply equal and opposite reaction force to the rigid body if dynamic
-                if (!body->IsStatic) {
-                    Vec2 force = normal * (penetration * 50.0f); // Stiffness modifier
-                    body->ApplyForceAtPoint(force, p.Position);
+                if (dist < rLimit) {
+                    Vec2 normal = diff.Normalized();
+                    float penetration = rLimit - dist;
+                    
+                    p.Position = p.Position + normal * penetration;
+                    
+                    float vn = Dot(p.Velocity, normal);
+                    if (vn < 0.0f) {
+                        p.Velocity = p.Velocity - normal * (vn * 1.5f);
+                    }
+                    
+                    if (!body->IsStatic) {
+                        Vec2 force = normal * (penetration * 50.0f);
+                        body->ApplyForce(force); // Reaction force
+                    }
                 }
             }
         }
-        // Additional Box collision checks are handled similarly using Box SDFs
     }
 }
+```
 ```

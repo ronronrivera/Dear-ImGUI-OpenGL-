@@ -26,95 +26,106 @@ This phase implements the numerical integrator (Semi-implicit Euler) that moves 
 
 * **Equations of Motion Solver**: Resolves position and velocity updates over time. Semi-implicit Euler is preferred over Explicit Euler because it preserves energy much better and matches constraint-based impulse solvers.
 
-## 📝 Pseudo-code / Flow of Execution
+## 📝 Class Structures & Flow of Execution
 
-### 1. The Core Update Loop (`world.cpp`)
-At each physics tick, the world processes bodies in two primary phases: integration of forces to velocity, followed by integration of velocity to position.
-
+### 1. `include/physics/integrator.hpp`
 ```cpp
-void World::Step(float dt) {
-    // Phase A: Integrate Forces (Generate Velocities)
-    for (RigidBody* body : Bodies) {
-        if (body->IsStatic || body->IsSleeping) continue;
+#pragma once
+#include "physics/rigid_body.hpp"
 
-        IntegrateForces(body, dt);
-    }
+namespace Physix {
+    class Integrator {
+    public:
+        static void IntegrateForces(RigidBody* body, const Vec2& gravity, float dt);
+        static void IntegrateVelocities(RigidBody* body, float dt);
+        static void UpdateSleepState(RigidBody* body, float dt);
 
-    // Phase B: Resolve Constraints & Collisions (Updates Velocities)
-    m_Broadphase.Update(Bodies);
-    auto collisionPairs = m_Broadphase.GetPairs();
-    m_Solver.ResolveCollisions(collisionPairs, dt);
+        static constexpr float SLEEP_LINEAR_THRESHOLD = 0.05f;
+        static constexpr float SLEEP_ANGULAR_THRESHOLD = 0.05f;
+        static constexpr float SLEEP_TIME_REQUIREMENT = 0.5f;
+    };
+}
+```
 
-    // Phase C: Integrate Velocities (Update Positions)
-    for (RigidBody* body : Bodies) {
-        if (body->IsStatic || body->IsSleeping) continue;
+### 2. `src/physics/integrator.cpp`
+```cpp
+#include "physics/integrator.hpp"
 
-        IntegrateVelocities(body, dt);
+namespace Physix {
+    void Integrator::IntegrateForces(RigidBody* body, const Vec2& gravity, float dt) {
+        if (body->IsStatic || body->IsSleeping) return;
+
+        // F = ma => a = F/m
+        // We assume body has standard linear damping of 0.1f or custom from material
+        Vec2 gravityForce = gravity * body->Mass;
+        Vec2 totalForce = body->ForceAccumulator + gravityForce;
+        Vec2 acceleration = totalForce * body->InvMass;
         
-        // Handle sleeping thresholds
-        UpdateSleepState(body, dt);
+        body->Velocity = body->Velocity + acceleration * dt;
+        body->Velocity = body->Velocity * (1.0f / (1.0f + dt * 0.1f));
+
+        // T = I * alpha => alpha = T/I
+        float angularAcceleration = body->TorqueAccumulator * body->InvInertia;
+        body->AngularVelocity += angularAcceleration * dt;
+        body->AngularVelocity *= (1.0f / (1.0f + dt * 0.1f));
     }
-}
-```
 
-### 2. Integration Mechanics (`integrator.cpp`)
-```cpp
-void IntegrateForces(RigidBody* body, float dt) {
-    // 1. Calculate Translational Acceleration (F = ma => a = F/m)
-    Vec2 gravityForce = body->GravityScale * WorldGravity * body->Mass;
-    Vec2 totalForce = body->ForceAccumulator + gravityForce;
-    Vec2 acceleration = totalForce * body->InvMass;
-    
-    // Update Linear Velocity
-    body->Velocity = body->Velocity + acceleration * dt;
-    
-    // Apply Linear Damping
-    body->Velocity = body->Velocity * (1.0f / (1.0f + dt * body->LinearDamping));
+    void Integrator::IntegrateVelocities(RigidBody* body, float dt) {
+        if (body->IsStatic || body->IsSleeping) return;
 
-    // 2. Calculate Rotational Acceleration (T = I*alpha => alpha = T/I)
-    float angularAcceleration = body->TorqueAccumulator * body->InvInertia;
-    
-    // Update Angular Velocity
-    body->AngularVelocity += angularAcceleration * dt;
-    
-    // Apply Angular Damping
-    body->AngularVelocity *= (1.0f / (1.0f + dt * body->AngularDamping));
-}
+        body->Position = body->Position + body->Velocity * dt;
+        body->Rotation += body->AngularVelocity * dt;
 
-void IntegrateVelocities(RigidBody* body, float dt) {
-    // Update position directly from modified velocities
-    body->Position = body->Position + body->Velocity * dt;
-    
-    // Update angle of rotation
-    body->Rotation += body->AngularVelocity * dt;
+        body->ForceAccumulator = Vec2(0.0f, 0.0f);
+        body->TorqueAccumulator = 0.0f;
+    }
 
-    // Reset force accumulators for the next frame
-    body->ForceAccumulator = Vec2(0.0f, 0.0f);
-    body->TorqueAccumulator = 0.0f;
-}
-```
+    void Integrator::UpdateSleepState(RigidBody* body, float dt) {
+        if (body->IsStatic) return;
 
-### 3. Sleeping Optimization System
-If rigid bodies are idle on the ground, keeping them active wastes CPU cycles.
-```cpp
-void UpdateSleepState(RigidBody* body, float dt) {
-    float velSq = body->Velocity.LengthSq();
-    float angVelSq = body->AngularVelocity * body->AngularVelocity;
-    
-    float linThresholdSq = SLEEP_LINEAR_THRESHOLD * SLEEP_LINEAR_THRESHOLD;
-    float angThresholdSq = SLEEP_ANGULAR_THRESHOLD * SLEEP_ANGULAR_THRESHOLD;
+        float velSq = body->Velocity.LengthSq();
+        float angVelSq = body->AngularVelocity * body->AngularVelocity;
+        
+        float linThresholdSq = SLEEP_LINEAR_THRESHOLD * SLEEP_LINEAR_THRESHOLD;
+        float angThresholdSq = SLEEP_ANGULAR_THRESHOLD * SLEEP_ANGULAR_THRESHOLD;
 
-    if (velSq < linThresholdSq && angVelSq < angThresholdSq) {
-        body->SleepTimer += dt;
-        if (body->SleepTimer >= SLEEP_TIME_REQUIREMENT) {
-            body->IsSleeping = true;
-            body->Velocity = Vec2(0.0f, 0.0f);
-            body->AngularVelocity = 0.0f;
+        if (velSq < linThresholdSq && angVelSq < angThresholdSq) {
+            body->SleepTimer += dt;
+            if (body->SleepTimer >= SLEEP_TIME_REQUIREMENT) {
+                body->IsSleeping = true;
+                body->Velocity = Vec2(0.0f, 0.0f);
+                body->AngularVelocity = 0.0f;
+            }
+        } else {
+            body->SleepTimer = 0.0f;
+            body->IsSleeping = false;
         }
-    } else {
-        body->SleepTimer = 0.0f;
-        body->IsSleeping = false;
     }
 }
 ```
-*Note: Any collision, user interaction (mouse drag), or external impulse must immediately set `body->IsSleeping = false` and reset `body->SleepTimer = 0.0f` to wake the sleeping body and its neighbors.*
+
+### 3. Core World Tick Loop (`src/physics/world.cpp`)
+```cpp
+#include "physics/world.hpp"
+#include "physics/integrator.hpp"
+
+namespace Physix {
+    // ... Constructor/Destructor and add/remove body code ...
+
+    void World::Step(float dt) {
+        // Phase A: Integrate Forces (Generate Velocities)
+        for (RigidBody* body : Bodies) {
+            Integrator::IntegrateForces(body, Gravity, dt);
+        }
+
+        // Phase B: Resolve Constraints & Collisions (Updates Velocities)
+        // (Broadphase and SAT Narrowphase Solver added in Phase 07/08)
+
+        // Phase C: Integrate Velocities (Update Positions)
+        for (RigidBody* body : Bodies) {
+            Integrator::IntegrateVelocities(body, dt);
+            Integrator::UpdateSleepState(body, dt);
+        }
+    }
+}
+```
